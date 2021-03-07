@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>测试 on 鲁建强的个人博客</title>
+    <link>https://192.168.0.111/tags/%E6%B5%8B%E8%AF%95/</link>
+    <description>Recent content in 测试 on 鲁建强的个人博客</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 06 Mar 2021 00:24:45 +0800</lastBuildDate><atom:link href="https://192.168.0.111/tags/%E6%B5%8B%E8%AF%95/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Redis-SDS</title>
+      <link>https://192.168.0.111/2021/03/redis-sds/</link>
+      <pubDate>Sat, 06 Mar 2021 00:24:45 +0800</pubDate>
+      
+      <guid>https://192.168.0.111/2021/03/redis-sds/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>

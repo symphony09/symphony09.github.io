@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Posts on 鲁建强的个人博客</title>
+    <link>http://localhost/post/</link>
+    <description>Recent content in Posts on 鲁建强的个人博客</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 06 Mar 2021 00:24:45 +0800</lastBuildDate><atom:link href="http://localhost/post/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Redis-SDS</title>
+      <link>http://localhost/2021/03/redis-sds/</link>
+      <pubDate>Sat, 06 Mar 2021 00:24:45 +0800</pubDate>
+      
+      <guid>http://localhost/2021/03/redis-sds/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>
