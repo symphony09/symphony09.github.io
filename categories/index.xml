@@ -2,26 +2,26 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Categories on 鲁建强的个人博客</title>
-    <link>http://localhost/categories/</link>
+    <link>https://symphony09.github.io/categories/</link>
     <description>Recent content in Categories on 鲁建强的个人博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sat, 06 Mar 2021 00:24:45 +0800</lastBuildDate><atom:link href="http://localhost/categories/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 06 Mar 2021 00:24:45 +0800</lastBuildDate><atom:link href="https://symphony09.github.io/categories/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Redis</title>
-      <link>http://localhost/categories/redis/</link>
+      <link>https://symphony09.github.io/categories/redis/</link>
       <pubDate>Sat, 06 Mar 2021 00:24:45 +0800</pubDate>
       
-      <guid>http://localhost/categories/redis/</guid>
+      <guid>https://symphony09.github.io/categories/redis/</guid>
       <description></description>
     </item>
     
     <item>
       <title>学习笔记</title>
-      <link>http://localhost/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/</link>
+      <link>https://symphony09.github.io/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/</link>
       <pubDate>Sat, 06 Mar 2021 00:24:45 +0800</pubDate>
       
-      <guid>http://localhost/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/</guid>
+      <guid>https://symphony09.github.io/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/</guid>
       <description></description>
     </item>
     
