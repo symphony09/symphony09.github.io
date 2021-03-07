@@ -250,7 +250,7 @@
             <div class="main-content-wrap">
               <p>Redis 是 C 语言实现的，但是 Redis 放弃了 C 语言传统的字符串而是自己创建了一种名为<strong>简单动态字符串 SDS</strong>（Simple Dynamic String）的抽象类型，并将 SDS 用作 Redis 的默认字符串表示，其主要原因就是传统的字符串表示方式并不能满足 Redis 对字符串在安全性、效率、以及功能方面的要求。先来看看SDS长什么样吧</p>
 <p><strong>SDS 结构体：</strong></p>
-<p><img src="images/host/redis/redis-sds.png" alt=""></p>
+<p><img src="https://symphony09.github.io/images/host/redis/redis-sds.png" alt=""></p>
 <p>可以看到字符串<code>&quot;redis&quot;</code>以字符数组的形式存放在了<code>buf</code>中，空字符<code>'\0'</code>表示字符串结尾，这一点和C语言的字符串是一样的。而多出来的<code>len</code>，<code>alloc</code>，<code>flags</code>让SDS相比C语言字符串更安全、性能更好、功能性更强，具体来说就是：</p>
 <ol>
 <li>可以常数复杂度获取字符串长度。</li>
