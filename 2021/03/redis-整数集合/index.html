@@ -7,26 +7,26 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="generator" content="Hugo 0.82.0-DEV with theme Tranquilpeak 0.4.8-BETA">
 <meta name="author" content="鲁建强 | oliver lu">
-<meta name="keywords" content="redis, 字典">
+<meta name="keywords" content="redis, 整数集合">
 <meta name="description" content="">
 
 
 <meta property="og:description" content="">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Redis-字典">
-<meta name="twitter:title" content="Redis-字典">
-<meta property="og:url" content="https://symphony09.github.io/2021/03/redis-%E5%AD%97%E5%85%B8/">
-<meta property="twitter:url" content="https://symphony09.github.io/2021/03/redis-%E5%AD%97%E5%85%B8/">
+<meta property="og:title" content="Redis-整数集合">
+<meta name="twitter:title" content="Redis-整数集合">
+<meta property="og:url" content="https://symphony09.github.io/2021/03/redis-%E6%95%B4%E6%95%B0%E9%9B%86%E5%90%88/">
+<meta property="twitter:url" content="https://symphony09.github.io/2021/03/redis-%E6%95%B4%E6%95%B0%E9%9B%86%E5%90%88/">
 <meta property="og:site_name" content="鲁建强的个人博客">
 <meta property="og:description" content="">
 <meta name="twitter:description" content="">
 <meta property="og:locale" content="zh-cn">
 
   
-    <meta property="article:published_time" content="2021-03-09T21:11:45">
+    <meta property="article:published_time" content="2021-03-12T21:47:30">
   
   
-    <meta property="article:modified_time" content="2021-03-09T21:11:45">
+    <meta property="article:modified_time" content="2021-03-12T21:47:30">
   
   
   
@@ -62,14 +62,14 @@
   <meta property="twitter:image" content="https://symphony09.github.io/avatar.jpg">
 
 
-    <title>Redis-字典</title>
+    <title>Redis-整数集合</title>
 
     <link rel="icon" href="https://symphony09.github.io/favicon.png">
     
 
     
 
-    <link rel="canonical" href="https://symphony09.github.io/2021/03/redis-%E5%AD%97%E5%85%B8/">
+    <link rel="canonical" href="https://symphony09.github.io/2021/03/redis-%E6%95%B4%E6%95%B0%E9%9B%86%E5%90%88/">
 
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
@@ -219,15 +219,15 @@
             <div class="post-header main-content-wrap text-left">
   
     <h1 class="post-title" itemprop="headline">
-      Redis-字典
+      Redis-整数集合
     </h1>
   
   
   <div class="postShorten-meta post-meta">
     
-      <time itemprop="datePublished" datetime="2021-03-09T21:11:45&#43;08:00">
+      <time itemprop="datePublished" datetime="2021-03-12T21:47:30&#43;08:00">
         
-  三月 9, 2021
+  三月 12, 2021
 
       </time>
     
@@ -248,58 +248,32 @@
           
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
-              <p><strong>字典</strong>在Redis中的应用相当广泛，比如Redis的数据库就是使用字典来作为底层实现的，对数据库的增、删、查、改操作也是构建在对字典的操作之上的。</p>
-<h5 id="字典结构解析">字典结构解析</h5>
-<p>Redis的字典使用哈希表作为底层实现，结构如图：</p>
-<p><img src="https://symphony09.github.io/images/host/redis/redis-ht.png" alt="字典结构示意图"></p>
-<p><code>table</code>属性是一个数组，数组中的每个元素都是一个指向<code>dict.h/dictEntry</code>结构的指针，每个<code>dictEntry</code>结构保存着一个键值对。<code>size</code>属性记录了哈希表的大小，也即是<code>table</code>数组的大小，而<code>used</code>属性则记录了哈希表目前已有节点（键值对）的数量。<code>sizemask</code>属性的值总是等于<code>size-1</code>，这个属性和哈希值一起决定一个键应该被放到<code>table</code>数组的哪个索引上面。</p>
-<span class="highlight-text red">
-
-index = hash & sizemask;
-
-</span>
-<p>其中hash是对key进行哈希运算得出的。</p>
-<h5 id="解决键冲突">解决键冲突</h5>
-<p>当出现两个键值对计算出的索引值index相同即发生键冲突时，Redis通过链地址法来解决冲突，索引值相同的键值对通过next指针以单向链表的形式连接在一起。</p>
-<p>要注意的一点是由于没有表尾指针，出于速度考虑，新节点直接插入表头，所以插入节点的复杂度为<strong>O(1)</strong>。</p>
-<h5 id="rehash重新散列">rehash（重新散列）</h5>
-<p>随着操作的不断执行，哈希表保存的键值对会逐渐地增多或者减少，为了让哈希表的<span class="highlight-text primary">负载因子</span>（load factor）维持在一个合理的范围之内，当哈希表保存的键值对数量太多或者太少时，程序需要对哈希表的大小进行相应的扩展或者收缩。扩展和收缩哈希表的工作可以通过执行rehash（重新散列）操作来完成。</p>
-<p>这个过程类似于搬家，所以会有旧房子ht[0]和新房子ht[1]，首先要判断是否需要搬家，通过公式计算负载因子：</p>
-<p><span class="highlight-text red">
-
-load_factor = ht[0].used / ht[0].size
-
-</span>（相当于房客数除以房间数）</p>
-<h6 id="满足以下条件时执行扩展操作">满足以下条件时执行扩展操作</h6>
-<p>1）服务器目前没有在执行<code>BGSAVE</code>命令或者<code>BGREWRITEAOF</code>命令，并且哈希表的<strong>负载因子大于等于1</strong>。</p>
-<p>2）服务器目前正在执行<code>BGSAVE</code>命令或者<code>BGREWRITEAOF</code>命令，并且哈希表的<strong>负载因子大于等于5</strong>。</p>
-<p>满足<strong>负载因子小于0.1</strong>时执行收缩操作。</p>
-<h6 id="rehash具体操作步骤">rehash具体操作步骤：</h6>
+              <p>整数集合（intset）是Redis用于保存整数值的集合抽象数据结构，它可以保存类型为int16_t、int32_t或者int64_t的整数值，并且保证集合中不会出现重复元素。</p>
+<p><strong>整数集合结构示意图</strong></p>
+<p><img src="https://symphony09.github.io/images/host/redis/redis-intset.jpg" alt="整数集合结构示意图"></p>
+<ul>
+<li><code>encoding</code>属性的值表示底层数组的整数类型。</li>
+<li><code>length</code>属性的值表示数组的长度。</li>
+<li><code>contents</code>就是底层整数数组。</li>
+</ul>
+<p>redis支持将不同类型的整数添加到整数数组中，但是不同类型的整数所占空间不同，这意味着需要额外的操作。</p>
+<p>当新元素的类型比整数集合现有所有元素的类型都要长时，需要升级操作。</p>
+<h5 id="升级操作">升级操作</h5>
 <ol>
 <li>
-<p>为字典的ht[1]哈希表分配空间，这个哈希表的空间大小取决于要执行的操作，以及ht[0]当前包含的键值对数量（也即是ht[0].used属性的值）：</p>
-<ul>
-<li>如果执行的是扩展操作，那么ht[1]的大小为第一个大于等于ht[0].used*2的2的n次方幂；</li>
-<li>如果执行的是收缩操作，那么ht[1]的大小为第一个大于等于ht[0].used的2的n次方幂。</li>
-</ul>
+<p>根据新元素的类型，扩展整数集合底层数组的空间大小，并为新元素分配空间。</p>
 </li>
 <li>
-<p>在字典中维持一个索引计数器变量<span class="highlight-text primary">rehashidx</span>，并将它的值<strong>设置为0</strong>，表示rehash工作正式开始。</p>
+<p>将底层数组现有的所有元素都转换成与新元素相同的类型，并将类型转换后的元素放置到正确的位上，而且在放置元素的过程中，需要继续维持底层数组的有序性质不变。从末尾开始搬可以避免位置冲突。</p>
 </li>
 <li>
-<p>在rehash进行期间，每次对字典执行添加、删除、查找或者更新操作时，程序除了执行指定的操作以外，还会顺带将ht[0]哈希表在rehashidx索引上的所有键值对rehash到ht[1]，当rehash工作完成之后，程序<strong>将rehashidx属性的值增一</strong>。</p>
-</li>
-<li>
-<p>随着字典操作的不断执行，最终在某个时间点上，ht[0]的所有键值对都会被rehash至ht[1]，这时程序<strong>将rehashidx属性的值设为-1</strong>，表示rehash操作已完成。</p>
-</li>
-<li>
-<p>当ht[0]包含的所有键值对都迁移到了ht[1]之后（ht[0]变为空表），释放ht[0]，将ht[1]设置为ht[0]，并在ht[1]新创建一个空白哈希表，为下一次rehash做准备。</p>
+<p>将新元素添加到底层数组里面。</p>
 </li>
 </ol>
-<p>这种渐进式rehash的好处在于它采取分而治之的方式，将rehash键值对所需的计算工作均摊到对字典的每个添加、删除、查找和更新操作上，从而避免了集中式rehash而带来的庞大计算量。</p>
-<p>缺点是因为同时有两张表保存数据，数据访问操作可能需要进行两次才能完成。</p>
+<p>因为引发升级的新元素的长度总是比整数集合现有所有元素的长度都大，所以这个新元素的值要么就大于所有现有元素而被放在末尾，要么就小于所有现有元素而被放在开头。</p>
+<p>通过升级操作，整数集合在具备灵活性的同时还能节约内存。要注意的是没有相对应的降级操作。</p>
 <h5 id="总结">总结</h5>
-<p>字典被广泛用于实现Redis的各种功能，其中包括数据库和哈希键。本文介绍了Redis字典的底层实现，包括如何计算索引，解决键冲突和rehash。渐进式的rehash让我印象最深，这种大而化小的解决思路值得学习。</p>
+<p>整数集合比较简单，要注意的是超出长度的的整数类型时引起的升级操作。</p>
 <div class="alert warning ">
   <p>转载请注明出处</p>
 </div>
@@ -327,7 +301,7 @@ load_factor = ht[0].used / ht[0].size
           
             <li class="post-action">
               
-                <a class="post-action-btn btn btn--default tooltip--top" href="https://symphony09.github.io/2021/03/redis-%E8%B7%B3%E8%B7%83%E8%A1%A8/" data-tooltip="Redis-跳跃表">
+                <a class="post-action-btn btn btn--disabled">
               
                   <i class="fa fa-angle-left"></i>
                   <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
@@ -335,7 +309,7 @@ load_factor = ht[0].used / ht[0].size
             </li>
             <li class="post-action">
               
-                <a class="post-action-btn btn btn--default tooltip--top" href="https://symphony09.github.io/2021/03/redis-%E9%93%BE%E8%A1%A8/" data-tooltip="Redis-链表">
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://symphony09.github.io/2021/03/redis-%E8%B7%B3%E8%B7%83%E8%A1%A8/" data-tooltip="Redis-跳跃表">
               
                   <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
                   <i class="fa fa-angle-right"></i>
@@ -353,19 +327,19 @@ load_factor = ht[0].used / ht[0].size
         </li>
         
           <li class="post-action hide-xs">
-            <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://symphony09.github.io/2021/03/redis-%E5%AD%97%E5%85%B8/">
+            <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://symphony09.github.io/2021/03/redis-%E6%95%B4%E6%95%B0%E9%9B%86%E5%90%88/">
               <i class="fa fa-facebook-official"></i>
             </a>
           </li>
         
           <li class="post-action hide-xs">
-            <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://symphony09.github.io/2021/03/redis-%E5%AD%97%E5%85%B8/">
+            <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://symphony09.github.io/2021/03/redis-%E6%95%B4%E6%95%B0%E9%9B%86%E5%90%88/">
               <i class="fa fa-twitter"></i>
             </a>
           </li>
         
           <li class="post-action hide-xs">
-            <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://symphony09.github.io/2021/03/redis-%E5%AD%97%E5%85%B8/">
+            <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://symphony09.github.io/2021/03/redis-%E6%95%B4%E6%95%B0%E9%9B%86%E5%90%88/">
               <i class="fa fa-google-plus"></i>
             </a>
           </li>
@@ -401,7 +375,7 @@ load_factor = ht[0].used / ht[0].size
           
             <li class="post-action">
               
-                <a class="post-action-btn btn btn--default tooltip--top" href="https://symphony09.github.io/2021/03/redis-%E8%B7%B3%E8%B7%83%E8%A1%A8/" data-tooltip="Redis-跳跃表">
+                <a class="post-action-btn btn btn--disabled">
               
                   <i class="fa fa-angle-left"></i>
                   <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
@@ -409,7 +383,7 @@ load_factor = ht[0].used / ht[0].size
             </li>
             <li class="post-action">
               
-                <a class="post-action-btn btn btn--default tooltip--top" href="https://symphony09.github.io/2021/03/redis-%E9%93%BE%E8%A1%A8/" data-tooltip="Redis-链表">
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://symphony09.github.io/2021/03/redis-%E8%B7%B3%E8%B7%83%E8%A1%A8/" data-tooltip="Redis-跳跃表">
               
                   <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
                   <i class="fa fa-angle-right"></i>
@@ -427,19 +401,19 @@ load_factor = ht[0].used / ht[0].size
         </li>
         
           <li class="post-action hide-xs">
-            <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://symphony09.github.io/2021/03/redis-%E5%AD%97%E5%85%B8/">
+            <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://symphony09.github.io/2021/03/redis-%E6%95%B4%E6%95%B0%E9%9B%86%E5%90%88/">
               <i class="fa fa-facebook-official"></i>
             </a>
           </li>
         
           <li class="post-action hide-xs">
-            <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://symphony09.github.io/2021/03/redis-%E5%AD%97%E5%85%B8/">
+            <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://symphony09.github.io/2021/03/redis-%E6%95%B4%E6%95%B0%E9%9B%86%E5%90%88/">
               <i class="fa fa-twitter"></i>
             </a>
           </li>
         
           <li class="post-action hide-xs">
-            <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://symphony09.github.io/2021/03/redis-%E5%AD%97%E5%85%B8/">
+            <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://symphony09.github.io/2021/03/redis-%E6%95%B4%E6%95%B0%E9%9B%86%E5%90%88/">
               <i class="fa fa-google-plus"></i>
             </a>
           </li>
@@ -463,19 +437,19 @@ load_factor = ht[0].used / ht[0].size
   <ul class="share-options">
     
       <li class="share-option">
-        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fsymphony09.github.io%2F2021%2F03%2Fredis-%25E5%25AD%2597%25E5%2585%25B8%2F">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fsymphony09.github.io%2F2021%2F03%2Fredis-%25E6%2595%25B4%25E6%2595%25B0%25E9%259B%2586%25E5%2590%2588%2F">
           <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
         </a>
       </li>
     
       <li class="share-option">
-        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fsymphony09.github.io%2F2021%2F03%2Fredis-%25E5%25AD%2597%25E5%2585%25B8%2F">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fsymphony09.github.io%2F2021%2F03%2Fredis-%25E6%2595%25B4%25E6%2595%25B0%25E9%259B%2586%25E5%2590%2588%2F">
           <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
         </a>
       </li>
     
       <li class="share-option">
-        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fsymphony09.github.io%2F2021%2F03%2Fredis-%25E5%25AD%2597%25E5%2585%25B8%2F">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fsymphony09.github.io%2F2021%2F03%2Fredis-%25E6%2595%25B4%25E6%2595%25B0%25E9%259B%2586%25E5%2590%2588%2F">
           <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
         </a>
       </li>
