@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.82.0-DEV with theme Tranquilpeak 0.4.8-BETA">
+<meta name="author" content="鲁建强 | oliver lu">
+<meta name="keywords" content="redis, 字典">
+<meta name="description" content="">
+
+
+<meta property="og:description" content="">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis（三）：字典">
+<meta name="twitter:title" content="Redis（三）：字典">
+<meta property="og:url" content="https://symphony09.github.io/2021/03/redis%E4%B8%89%E5%AD%97%E5%85%B8/">
+<meta property="twitter:url" content="https://symphony09.github.io/2021/03/redis%E4%B8%89%E5%AD%97%E5%85%B8/">
+<meta property="og:site_name" content="鲁建强的个人博客">
+<meta property="og:description" content="">
+<meta name="twitter:description" content="">
+<meta property="og:locale" content="zh-cn">
+
+  
+    <meta property="article:published_time" content="2021-03-09T21:11:45">
+  
+  
+    <meta property="article:modified_time" content="2021-03-09T21:11:45">
+  
+  
+  
+    
+      <meta property="article:section" content="学习笔记">
+    
+      <meta property="article:section" content="Redis">
+    
+  
+  
+    
+      <meta property="article:tag" content="Redis数据结构与对象">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+
+
+
+
+
+
+  <meta property="og:image" content="https://symphony09.github.io/images/host/redis/redis-icon-logo.png">
+  <meta property="twitter:image" content="https://symphony09.github.io/images/host/redis/redis-icon-logo.png">
+
+
+
+
+
+  <meta property="og:image" content="https://symphony09.github.io/avatar.jpg">
+  <meta property="twitter:image" content="https://symphony09.github.io/avatar.jpg">
+
+
+    <title>Redis（三）：字典</title>
+
+    <link rel="icon" href="https://symphony09.github.io/favicon.ico">
+    
+
+    
+
+    <link rel="canonical" href="https://symphony09.github.io/2021/03/redis%E4%B8%89%E5%AD%97%E5%85%B8/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="https://symphony09.github.io/css/style-twzjdbqhmnnacqs0pwwdzcdbt8yhv8giawvjqjmyfoqnvazl0dalmnhdkvp7.min.css" />
+    
+    
+
+    
+      
+    
+    
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="4">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="https://symphony09.github.io/">鲁建强的个人博客</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="https://symphony09.github.io/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://symphony09.github.io/avatar.jpg" alt="作者的图片" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="4">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="https://symphony09.github.io/#about">
+          <img class="sidebar-profile-picture" src="https://symphony09.github.io/avatar.jpg" alt="作者的图片" />
+        </a>
+        <h4 class="sidebar-profile-name">鲁建强 | oliver lu</h4>
+        
+          <h5 class="sidebar-profile-bio"><strong>fmt.Println(&quot; 三人行, 必有我师焉 &ldquo;)</strong></h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://symphony09.github.io/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">首页</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://symphony09.github.io/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">分类</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://symphony09.github.io/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">标签</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://symphony09.github.io/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">归档</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://symphony09.github.io/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">关于</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/symphony09" target="_blank" rel="noopener">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://symphony09.github.io/index.xml">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-rss"></i>
+      
+      <span class="sidebar-button-desc">RSS</span>
+    </a>
+  </li>
+
+
+    </ul>
+  </div>
+</nav>
+
+      
+
+      <div id="main" data-behavior="4"
+        class="
+               hasCoverMetaIn
+               ">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+          
+            <div class="post-header main-content-wrap text-left">
+  
+    <h1 class="post-title" itemprop="headline">
+      Redis（三）：字典
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2021-03-09T21:11:45&#43;08:00">
+        
+  三月 9, 2021
+
+      </time>
+    
+    
+  
+  
+    <span>发布在</span>
+    
+      <a class="category-link" href="https://symphony09.github.io/categories/%e5%ad%a6%e4%b9%a0%e7%ac%94%e8%ae%b0">学习笔记</a>, 
+    
+      <a class="category-link" href="https://symphony09.github.io/categories/redis">Redis</a>
+    
+  
+
+  </div>
+
+</div>
+          
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <p><strong>字典</strong>在Redis中的应用相当广泛，比如Redis的数据库就是使用字典来作为底层实现的，对数据库的增、删、查、改操作也是构建在对字典的操作之上的。</p>
+<h5 id="字典结构解析">字典结构解析</h5>
+<p>Redis的字典使用哈希表作为底层实现，结构如图：</p>
+<p><img src="https://symphony09.github.io/images/host/redis/redis-ht.png" alt="字典结构示意图"></p>
+<p><code>table</code>属性是一个数组，数组中的每个元素都是一个指向<code>dict.h/dictEntry</code>结构的指针，每个<code>dictEntry</code>结构保存着一个键值对。<code>size</code>属性记录了哈希表的大小，也即是<code>table</code>数组的大小，而<code>used</code>属性则记录了哈希表目前已有节点（键值对）的数量。<code>sizemask</code>属性的值总是等于<code>size-1</code>，这个属性和哈希值一起决定一个键应该被放到<code>table</code>数组的哪个索引上面。</p>
+<span class="highlight-text red">
+
+index = hash & sizemask;
+
+</span>
+<p>其中hash是对key进行哈希运算得出的。</p>
+<h5 id="解决键冲突">解决键冲突</h5>
+<p>当出现两个键值对计算出的索引值index相同即发生键冲突时，Redis通过链地址法来解决冲突，索引值相同的键值对通过next指针以单向链表的形式连接在一起。</p>
+<p>要注意的一点是由于没有表尾指针，出于速度考虑，新节点直接插入表头，所以插入节点的复杂度为<strong>O(1)</strong>。</p>
+<h5 id="rehash重新散列">rehash（重新散列）</h5>
+<p>随着操作的不断执行，哈希表保存的键值对会逐渐地增多或者减少，为了让哈希表的<span class="highlight-text primary">负载因子</span>（load factor）维持在一个合理的范围之内，当哈希表保存的键值对数量太多或者太少时，程序需要对哈希表的大小进行相应的扩展或者收缩。扩展和收缩哈希表的工作可以通过执行rehash（重新散列）操作来完成。</p>
+<p>这个过程类似于搬家，所以会有旧房子ht[0]和新房子ht[1]，首先要判断是否需要搬家，通过公式计算负载因子：</p>
+<p><span class="highlight-text red">
+
+load_factor = ht[0].used / ht[0].size
+
+</span>（相当于房客数除以房间数）</p>
+<h6 id="满足以下条件时执行扩展操作">满足以下条件时执行扩展操作</h6>
+<p>1）服务器目前没有在执行<code>BGSAVE</code>命令或者<code>BGREWRITEAOF</code>命令，并且哈希表的<strong>负载因子大于等于1</strong>。</p>
+<p>2）服务器目前正在执行<code>BGSAVE</code>命令或者<code>BGREWRITEAOF</code>命令，并且哈希表的<strong>负载因子大于等于5</strong>。</p>
+<p>满足<strong>负载因子小于0.1</strong>时执行收缩操作。</p>
+<h6 id="rehash具体操作步骤">rehash具体操作步骤：</h6>
+<ol>
+<li>
+<p>为字典的ht[1]哈希表分配空间，这个哈希表的空间大小取决于要执行的操作，以及ht[0]当前包含的键值对数量（也即是ht[0].used属性的值）：</p>
+<ul>
+<li>如果执行的是扩展操作，那么ht[1]的大小为第一个大于等于ht[0].used*2的2的n次方幂；</li>
+<li>如果执行的是收缩操作，那么ht[1]的大小为第一个大于等于ht[0].used的2的n次方幂。</li>
+</ul>
+</li>
+<li>
+<p>在字典中维持一个索引计数器变量<span class="highlight-text primary">rehashidx</span>，并将它的值<strong>设置为0</strong>，表示rehash工作正式开始。</p>
+</li>
+<li>
+<p>在rehash进行期间，每次对字典执行添加、删除、查找或者更新操作时，程序除了执行指定的操作以外，还会顺带将ht[0]哈希表在rehashidx索引上的所有键值对rehash到ht[1]，当rehash工作完成之后，程序<strong>将rehashidx属性的值增一</strong>。</p>
+</li>
+<li>
+<p>随着字典操作的不断执行，最终在某个时间点上，ht[0]的所有键值对都会被rehash至ht[1]，这时程序<strong>将rehashidx属性的值设为-1</strong>，表示rehash操作已完成。</p>
+</li>
+<li>
+<p>当ht[0]包含的所有键值对都迁移到了ht[1]之后（ht[0]变为空表），释放ht[0]，将ht[1]设置为ht[0]，并在ht[1]新创建一个空白哈希表，为下一次rehash做准备。</p>
+</li>
+</ol>
+<p>这种渐进式rehash的好处在于它采取分而治之的方式，将rehash键值对所需的计算工作均摊到对字典的每个添加、删除、查找和更新操作上，从而避免了集中式rehash而带来的庞大计算量。</p>
+<p>缺点是因为同时有两张表保存数据，数据访问操作可能需要进行两次才能完成。</p>
+<h5 id="总结">总结</h5>
+<p>字典被广泛用于实现Redis的各种功能，其中包括数据库和哈希键。本文介绍了Redis字典的底层实现，包括如何计算索引，解决键冲突和rehash。渐进式的rehash让我印象最深，这种大而化小的解决思路值得学习。</p>
+<div class="alert warning ">
+  <p>转载请注明出处</p>
+</div>
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">标签</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="https://symphony09.github.io/tags/redis%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E5%AF%B9%E8%B1%A1/">Redis数据结构与对象</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://symphony09.github.io/2021/03/redis%E5%9B%9B%E8%B7%B3%E8%B7%83%E8%A1%A8/" data-tooltip="Redis（四）：跳跃表">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://symphony09.github.io/2021/03/redis%E4%BA%8C%E9%93%BE%E8%A1%A8/" data-tooltip="Redis（二）：链表">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+        <li class="post-action hide-lg hide-md hide-sm">
+          <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions">
+            <i class="fa fa-share-alt"></i>
+          </a>
+        </li>
+        
+          <li class="post-action hide-xs">
+            <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://symphony09.github.io/2021/03/redis%E4%B8%89%E5%AD%97%E5%85%B8/">
+              <i class="fa fa-facebook-official"></i>
+            </a>
+          </li>
+        
+          <li class="post-action hide-xs">
+            <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://symphony09.github.io/2021/03/redis%E4%B8%89%E5%AD%97%E5%85%B8/">
+              <i class="fa fa-twitter"></i>
+            </a>
+          </li>
+        
+          <li class="post-action hide-xs">
+            <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://symphony09.github.io/2021/03/redis%E4%B8%89%E5%AD%97%E5%85%B8/">
+              <i class="fa fa-google-plus"></i>
+            </a>
+          </li>
+        
+      
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+          </div>
+        </article>
+        <footer id="footer" class="main-content-wrap">
+  <span class="copyrights">
+    &copy; 2021 鲁建强 | oliver lu. All Rights Reserved
+  </span>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://symphony09.github.io/2021/03/redis%E5%9B%9B%E8%B7%B3%E8%B7%83%E8%A1%A8/" data-tooltip="Redis（四）：跳跃表">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">下一篇</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://symphony09.github.io/2021/03/redis%E4%BA%8C%E9%93%BE%E8%A1%A8/" data-tooltip="Redis（二）：链表">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">上一篇</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+        <li class="post-action hide-lg hide-md hide-sm">
+          <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions">
+            <i class="fa fa-share-alt"></i>
+          </a>
+        </li>
+        
+          <li class="post-action hide-xs">
+            <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://symphony09.github.io/2021/03/redis%E4%B8%89%E5%AD%97%E5%85%B8/">
+              <i class="fa fa-facebook-official"></i>
+            </a>
+          </li>
+        
+          <li class="post-action hide-xs">
+            <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://symphony09.github.io/2021/03/redis%E4%B8%89%E5%AD%97%E5%85%B8/">
+              <i class="fa fa-twitter"></i>
+            </a>
+          </li>
+        
+          <li class="post-action hide-xs">
+            <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://symphony09.github.io/2021/03/redis%E4%B8%89%E5%AD%97%E5%85%B8/">
+              <i class="fa fa-google-plus"></i>
+            </a>
+          </li>
+        
+      
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fsymphony09.github.io%2F2021%2F03%2Fredis%25E4%25B8%2589%25E5%25AD%2597%25E5%2585%25B8%2F">
+          <i class="fa fa-facebook-official"></i><span>分享到 Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Fsymphony09.github.io%2F2021%2F03%2Fredis%25E4%25B8%2589%25E5%25AD%2597%25E5%2585%25B8%2F">
+          <i class="fa fa-twitter"></i><span>分享到 Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Fsymphony09.github.io%2F2021%2F03%2Fredis%25E4%25B8%2589%25E5%25AD%2597%25E5%2585%25B8%2F">
+          <i class="fa fa-google-plus"></i><span>分享到 Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://symphony09.github.io/avatar.jpg" alt="作者的图片" />
+    
+    <h4 id="about-card-name">鲁建强 | oliver lu</h4>
+    
+      <div id="about-card-bio"><strong>fmt.Println(&quot; 三人行, 必有我师焉 &ldquo;)</strong></div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Golang后端工程师
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        浙江-杭州
+      </div>
+    
+  </div>
+</div>
+
+    
+
+    
+  
+    
+      <div id="cover" style="background-image:url('https://symphony09.github.io/images/cover.jpg');"></div>
+    
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="https://symphony09.github.io/js/script-pcw6v3xilnxydl1vddzazdverrnn9ctynvnxgwho987mfyqkuylcb1nlt.min.js"></script>
+
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+
+
+
+
+    
+  </body>
+</html>
+
