@@ -28,7 +28,7 @@ jobs:
           restore-keys: |
             ${{ runner.OS }}-npm-cache
       - name: Install Dependencies
-        run: npm config set strict-ssl false && npm install
+        run: npm config set strict-ssl false && npm config set registry https://registry.npmmirror.com && npm config get registry && npm install
       - name: Build
         run: npm run build
       - name: Upload Pages artifact
